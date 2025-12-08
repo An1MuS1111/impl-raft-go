@@ -32,3 +32,10 @@ proto:
 	protoc --go_out=. --go_opt=paths=source_relative \
     --go-grpc_out=. --go-grpc_opt=paths=source_relative \
     proto/$(target).proto
+
+.PHONY: spawn
+spawn: build
+# NOTE: The line below must start with a literal TAB character.
+	chmod +x spawn.sh
+# NOTE: The line below must start with a literal TAB character.
+	./spawn.sh

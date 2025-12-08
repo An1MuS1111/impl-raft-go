@@ -70,9 +70,9 @@ func TestNewRaftNode_WithPersistedState(t *testing.T) {
 	expectedTerm := uint64(5)
 	expectedVotedFor := uint64(3)
 	expectedLog := []Log{
-		{term: 1, msg: Message{}},
-		{term: 2, msg: Message{}},
-		{term: 3, msg: Message{}},
+		{Term: 1, Msg: Message{}},
+		{Term: 2, Msg: Message{}},
+		{Term: 3, Msg: Message{}},
 	}
 	expectedCommitLength := uint64(2)
 
@@ -120,8 +120,8 @@ func TestNewRaftNode_WithPersistedState(t *testing.T) {
 		t.Errorf("expected log length %d, got %d", len(expectedLog), len(node.log))
 	}
 	for i, logEntry := range node.log {
-		if logEntry.term != expectedLog[i].term {
-			t.Errorf("log[%d]: expected term %d, got %d", i, expectedLog[i].term, logEntry.term)
+		if logEntry.Term != expectedLog[i].Term {
+			t.Errorf("log[%d]: expected term %d, got %d", i, expectedLog[i].Term, logEntry.Term)
 		}
 	}
 }
@@ -257,7 +257,7 @@ func TestNewRaftNode_LargeLog(t *testing.T) {
 	// Create large log
 	largeLog := make([]Log, 10000)
 	for i := range largeLog {
-		largeLog[i] = Log{term: uint64(i / 100), msg: Message{}}
+		largeLog[i] = Log{Term: uint64(i / 100), Msg: Message{}}
 	}
 
 	encoder := gob.NewEncoder(file)

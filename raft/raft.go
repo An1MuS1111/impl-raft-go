@@ -21,8 +21,8 @@ type Message struct {
 }
 
 type Log struct {
-	term uint64
-	msg  Message
+	Term uint64
+	Msg  Message
 }
 
 type RaftNode struct {
@@ -46,27 +46,6 @@ type RaftNode struct {
 	// sentLength    uint64
 	// ackedLength   uint64
 
-}
-
-// func (r *RaftNode) generateUniqueId() uint64 {
-
-// 	for {
-// 		uniqueID := rand.Uint64N(100)
-// 		if _, ok := r.nodes[uniqueID]; ok {
-// 			continue
-// 		}
-// 		return uniqueID
-// 	}
-// }
-
-func (r *RaftNode) SetPeers(peers map[uint64]net.Addr) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	// remove self from peers
-	delete(peers, r.id)
-	r.peers = peers
-
-	fmt.Println(r.id, r.addr, r.peers)
 }
 
 func NewRaftNode(file *os.File, id uint64, addr net.Addr) (*RaftNode, error) {
@@ -132,6 +111,22 @@ func NewRaftNode(file *os.File, id uint64, addr net.Addr) (*RaftNode, error) {
 	return raftNode, nil
 }
 
+func (r *RaftNode) setPeers(peers map[uint64]net.Addr) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	// remove self from peers
+	delete(peers, r.id)
+	r.peers = peers
+
+	fmt.Println(r.id, r.addr, r.peers)
+}
+
+func (r *RaftNode) StartServer(addrs map[uint64]net.Addr) error {
+	r.setPeers(addrs)
+
+	return nil
+}
+
 func (r *RaftNode) BecomeLeader() {
 
 }
@@ -156,4 +151,4 @@ func (r *RaftNode) BecomeCandidate() {
 // During this election, if the node hears from another candidate or leader with a higher term,
 // it moves back into the follower state.
 // But if the election succeeds and it receives votes from a quorum of nodes, the candidate transitions to leader state.
-// If not enough votes are received within some period of time, the election times out, and the candidate restarts the election with a higher term.
+// If not enough votes are received within some period of time, the election times out, and the candidate restarts the election with a higher term. !important
