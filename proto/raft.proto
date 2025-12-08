@@ -36,8 +36,8 @@ message AppendEntriesArgs {
 message AppendEntriesReply {
   int64 term = 1;
   bool success = 2;
-  int64 conflictIndex = 3; 
-  int64 conflictTerm = 4;
+  // int64 conflictIndex = 3; 
+  // int64 conflictTerm = 4;
 }
 
 message InstallSnapshotArgs {

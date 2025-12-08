@@ -229,8 +229,6 @@ type AppendEntriesReply struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Term          int64                  `protobuf:"varint,1,opt,name=term,proto3" json:"term,omitempty"`
 	Success       bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
-	ConflictIndex int64                  `protobuf:"varint,3,opt,name=conflictIndex,proto3" json:"conflictIndex,omitempty"`
-	ConflictTerm  int64                  `protobuf:"varint,4,opt,name=conflictTerm,proto3" json:"conflictTerm,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -277,20 +275,6 @@ func (x *AppendEntriesReply) GetSuccess() bool {
 		return x.Success
 	}
 	return false
-}
-
-func (x *AppendEntriesReply) GetConflictIndex() int64 {
-	if x != nil {
-		return x.ConflictIndex
-	}
-	return 0
-}
-
-func (x *AppendEntriesReply) GetConflictTerm() int64 {
-	if x != nil {
-		return x.ConflictTerm
-	}
-	return 0
 }
 
 type InstallSnapshotArgs struct {
@@ -581,12 +565,10 @@ const file_proto_raft_proto_rawDesc = "" +
 	"\fprevLogIndex\x18\x03 \x01(\x03R\fprevLogIndex\x12 \n" +
 	"\vprevLogTerm\x18\x04 \x01(\x03R\vprevLogTerm\x12(\n" +
 	"\aentries\x18\x05 \x03(\v2\x0e.raft.LogEntryR\aentries\x12\"\n" +
-	"\fleaderCommit\x18\x06 \x01(\x03R\fleaderCommit\"\x8c\x01\n" +
+	"\fleaderCommit\x18\x06 \x01(\x03R\fleaderCommit\"B\n" +
 	"\x12AppendEntriesReply\x12\x12\n" +
 	"\x04term\x18\x01 \x01(\x03R\x04term\x12\x18\n" +
-	"\asuccess\x18\x02 \x01(\bR\asuccess\x12$\n" +
-	"\rconflictIndex\x18\x03 \x01(\x03R\rconflictIndex\x12\"\n" +
-	"\fconflictTerm\x18\x04 \x01(\x03R\fconflictTerm\"\xb3\x01\n" +
+	"\asuccess\x18\x02 \x01(\bR\asuccess\"\xb3\x01\n" +
 	"\x13InstallSnapshotArgs\x12\x12\n" +
 	"\x04term\x18\x01 \x01(\x03R\x04term\x12\x1a\n" +
 	"\bleaderId\x18\x02 \x01(\x03R\bleaderId\x12,\n" +
