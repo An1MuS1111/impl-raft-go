@@ -8,6 +8,9 @@ import (
 	"net"
 	"os"
 	"sync"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type ServerState uint64
@@ -58,7 +61,7 @@ type RaftNode struct {
 	// it is committed, but it takes the leader receiving a bunch of acknowledgements to realize this and update its commitIndex.
 	// If you think of commitment that way, it's not a big stretch
 	// to accept the idea that servers' commitIndex values may sometimes reset to 0 (when they reboot) and nothing bad comes of it.
-	commitLength uint64 // index of highest log entry known to be committed (initialized at 0, increases monotonically)
+	commitIndex uint64 // index of highest log entry known to be committed (initialized at 0, increases monotonically)
 	//? not entirely sure about this! how to retrieve the commit index on recovery?
 	lastApplied uint64
 
@@ -72,6 +75,8 @@ type RaftNode struct {
 	//! volatile state on leader (reintialized after election)
 	nextIndex  []uint64 // for each server, index of the next log entry to send to that server (initialized to leader last log index + 1)
 	matchIndex []uint64 // for each server, index of highest log entry known to be replicated on server (initialized to 0, increases monotonically)
+
+	clients map[uint64]proto.RaftServiceClient
 }
 
 func (r *RaftNode) restoreState(file *os.File) error {
@@ -86,10 +91,10 @@ func (r *RaftNode) restoreState(file *os.File) error {
 	if err := decoder.Decode(&r.log); err != nil {
 		return fmt.Errorf("failed to decode log: %v", err)
 	}
-	if err := decoder.Decode(&r.commitLength); err != nil {
-		return fmt.Errorf("failed to decode commitLength: %v", err)
+	// if err := decoder.Decode(&r.commitIndex); err != nil {
+	// 	return fmt.Errorf("failed to decode commitIndex: %v", err)
 
-	}
+	// }
 
 	return nil
 }
@@ -109,10 +114,10 @@ func (r *RaftNode) storeState(file *os.File) error {
 	if err := encoder.Encode(&r.log); err != nil {
 		return fmt.Errorf("failed to Encode log: %v", err)
 	}
-	if err := encoder.Encode(&r.commitLength); err != nil {
-		return fmt.Errorf("failed to decode commitLength: %v", err)
+	// if err := encoder.Encode(&r.commitIndex); err != nil {
+	// 	return fmt.Errorf("failed to decode commitIndex: %v", err)
 
-	}
+	// }
 
 	return nil
 }
@@ -126,11 +131,12 @@ func NewRaftNode(file *os.File, id uint64, addr net.Addr, addrs map[uint64]net.A
 		addr:        addr,
 		currentRole: Follower,
 		peers:       make(map[uint64]net.Addr),
+		clients:     make(map[uint64]proto.RaftServiceClient),
 	}
 
 	raftNode.setPeers(addrs)
 
-	// extract currentTerm, votedFor, log, and commitLength
+	// extract currentTerm, votedFor, log, and commitIndex
 	// from the disk for initialization
 
 	if _, err := file.Seek(0, 0); err != nil {
@@ -146,25 +152,45 @@ func NewRaftNode(file *os.File, id uint64, addr net.Addr, addrs map[uint64]net.A
 	// for some reason it was shutdown to apply some updates
 	configSize := stat.Size()
 	if configSize == 0 {
-		log.Printf("starting a new server")
 
 		raftNode.currentTerm = 0
 		raftNode.votedFor = 0
 		raftNode.log = make([]Log, 0)
-		raftNode.commitLength = 0
+		raftNode.commitIndex = 0
 
-		return raftNode, nil
-
+	} else {
+		// sync the node and retrieve the persisted states
+		log.Printf("server restarted. config size: %v", configSize)
+		log.Printf("retrieving persisted state")
+		if err := raftNode.restoreState(file); err != nil {
+			return nil, fmt.Errorf("failed to restore state from persistence: %v", err)
+		}
 	}
 
-	// sync the node and retrieve the persisted states
-	log.Printf("server restarted. config size: %v", configSize)
-	log.Printf("retrieving persisted state")
-	if err := raftNode.restoreState(file); err != nil {
-		return nil, fmt.Errorf("failed to restore state from persistence: %v", err)
-	}
-
+	raftNode.dialPeers()
 	return raftNode, nil
+}
+
+// Helper to establish GRPC connections to all peers
+func (r *RaftNode) dialPeers() {
+	peers := r.peers
+	fmt.Println("debug: ", peers)
+	for id, peer := range peers {
+		fmt.Println("debug: id", id)
+
+		peerStr := peer.String()
+		conn, err := grpc.NewClient(peerStr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if conn != nil {
+			fmt.Printf("connected to: %v", peerStr)
+		}
+		// allow partial connectivity; handle in production
+		if err != nil {
+			fmt.Printf("failed to connect to peer %d (%s): %v\n", id, peerStr, err)
+		} else {
+			r.clients[id] = proto.NewRaftServiceClient(conn)
+		}
+
+	}
 }
 
 func (r *RaftNode) setPeers(addrs map[uint64]net.Addr) {
@@ -181,6 +207,20 @@ func (r *RaftNode) setPeers(addrs map[uint64]net.Addr) {
 // else convert to candidate and start election
 
 func (r *RaftNode) StartServer() error {
+
+	addr := r.addr.String()
+
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		return fmt.Errorf("failed to listen on %s: %v", addr, err)
+	}
+
+	grpcServer := grpc.NewServer()
+	proto.RegisterRaftServiceServer(grpcServer, r)
+
+	if err := grpcServer.Serve(listener); err != nil {
+		return fmt.Errorf("failed to server grpc: %v", err)
+	}
 
 	// If it receives no messages from a leader or candidate for some period of time,
 	// the follower suspects that the leader is unavailable, and it may attempt to become leader itself.

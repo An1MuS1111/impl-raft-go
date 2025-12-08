@@ -48,8 +48,8 @@ func TestNewRaftNode_EmptyFile(t *testing.T) {
 	if node.votedFor != 0 {
 		t.Errorf("expected votedFor 0, got %d", node.votedFor)
 	}
-	if node.commitLength != 0 {
-		t.Errorf("expected commitLength 0, got %d", node.commitLength)
+	if node.commitIndex != 0 {
+		t.Errorf("expected commitIndex 0, got %d", node.commitIndex)
 	}
 	if len(node.log) != 0 {
 		t.Errorf("expected empty log, got length %d", len(node.log))
@@ -74,7 +74,7 @@ func TestNewRaftNode_WithPersistedState(t *testing.T) {
 		{Term: 2, Command: "cmd2"},
 		{Term: 3, Command: "cmd3"},
 	}
-	expectedCommitLength := uint64(2)
+	expectedcommitIndex := uint64(2)
 
 	encoder := gob.NewEncoder(file)
 	if err := encoder.Encode(expectedTerm); err != nil {
@@ -86,8 +86,8 @@ func TestNewRaftNode_WithPersistedState(t *testing.T) {
 	if err := encoder.Encode(expectedLog); err != nil {
 		t.Fatalf("failed to encode log: %v", err)
 	}
-	if err := encoder.Encode(expectedCommitLength); err != nil {
-		t.Fatalf("failed to encode commitLength: %v", err)
+	if err := encoder.Encode(expectedcommitIndex); err != nil {
+		t.Fatalf("failed to encode commitIndex: %v", err)
 	}
 	file.Close()
 
@@ -113,8 +113,8 @@ func TestNewRaftNode_WithPersistedState(t *testing.T) {
 	if node.votedFor != expectedVotedFor {
 		t.Errorf("expected votedFor %d, got %d", expectedVotedFor, node.votedFor)
 	}
-	if node.commitLength != expectedCommitLength {
-		t.Errorf("expected commitLength %d, got %d", expectedCommitLength, node.commitLength)
+	if node.commitIndex != expectedcommitIndex {
+		t.Errorf("expected commitIndex %d, got %d", expectedcommitIndex, node.commitIndex)
 	}
 	if len(node.log) != len(expectedLog) {
 		t.Errorf("expected log length %d, got %d", len(expectedLog), len(node.log))
@@ -164,7 +164,7 @@ func TestNewRaftNode_PartialData(t *testing.T) {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
 
-	// Write only term and votedFor, missing log and commitLength
+	// Write only term and votedFor, missing log and commitIndex
 	encoder := gob.NewEncoder(file)
 	encoder.Encode(uint64(3))
 	encoder.Encode(uint64(2))

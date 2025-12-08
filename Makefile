@@ -22,7 +22,7 @@ build: install-deps
 	go build -o $(BINARY_PATH) $(MAIN_PATH)
 
 # Run the application (using 'go run' for simplicity, but you could run the built binary)
-run:
+run: build
 	go run $(MAIN_PATH)/main.go
 
 # Run all tests
