@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/gob"
 	"fmt"
 	"impl-raft-go/proto"
@@ -8,6 +9,7 @@ import (
 	"net"
 	"os"
 	"sync"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -189,6 +191,29 @@ func NewRaftNode(file *os.File, id uint64, addr net.Addr, addrs map[uint64]net.A
 	}
 
 	raftNode.dialPeers()
+
+	go func() {
+		ctx := context.Background()
+
+		ticker := time.Tick(time.Millisecond * 300)
+
+		for {
+			<-ticker
+
+			for id, client := range raftNode.clients {
+				reply, err := client.HealthCheck(ctx, &proto.HealthCheckArgs{Ping: "Ping"})
+				if reply == nil {
+					log.Printf("no reply from: %v", raftNode.peers[id])
+				}
+
+				if err != nil {
+					log.Printf("reconnecting: waiting for connection: %v", raftNode.peers[id])
+				}
+
+				log.Printf("sent to: %v, reply: %v", raftNode.peers[id], reply)
+			}
+		}
+	}()
 	return raftNode, nil
 }
 
