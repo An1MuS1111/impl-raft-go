@@ -12,9 +12,7 @@ BINARY_PATH=$(OUTPUT_DIR)/$(BINARY_NAME)
 # Install required dependencies
 .PHONY: install-deps
 install-deps:
-	go get -u "google.golang.org/protobuf/reflect/protoreflect"
-	go get -u "google.golang.org/protobuf/runtime/protoimpl"
-	go get -u "google.golang.org/grpc"
+	go mod tidy
 
 # Build the application binary
 build: install-deps

@@ -30,7 +30,7 @@ func init() {
 func main() {
 
 	log.SetFlags(log.Ltime)
-	log.SetPrefix("raft: ")
+	log.SetPrefix("\n")
 
 	file, err := os.OpenFile("config.dat", os.O_CREATE|os.O_RDWR, 0644)
 	handleError(err)
