@@ -122,6 +122,27 @@ func (r *RaftNode) storeState(file *os.File) error {
 	return nil
 }
 
+// Helper to establish GRPC connections to all peers
+func (r *RaftNode) dialPeers() {
+	peers := r.peers
+
+	for id, peer := range peers {
+
+		peerStr := peer.String()
+		conn, err := grpc.NewClient(peerStr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if conn != nil {
+			fmt.Printf("connected to: %v", peerStr)
+		}
+		// allow partial connectivity; handle in production
+		if err != nil {
+			fmt.Printf("failed to connect to peer %d (%s): %v\n", id, peerStr, err)
+		} else {
+			r.clients[id] = proto.NewRaftServiceClient(conn)
+		}
+
+	}
+}
+
 func NewRaftNode(file *os.File, id uint64, addr net.Addr, addrs map[uint64]net.Addr) (*RaftNode, error) {
 	// A node can be of three states (Leader, Candidate, Follower)
 	// When a node first starts running, or when it crashes and recovers,
@@ -171,28 +192,6 @@ func NewRaftNode(file *os.File, id uint64, addr net.Addr, addrs map[uint64]net.A
 	return raftNode, nil
 }
 
-// Helper to establish GRPC connections to all peers
-func (r *RaftNode) dialPeers() {
-	peers := r.peers
-	fmt.Println("debug: ", peers)
-	for id, peer := range peers {
-		fmt.Println("debug: id", id)
-
-		peerStr := peer.String()
-		conn, err := grpc.NewClient(peerStr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if conn != nil {
-			fmt.Printf("connected to: %v", peerStr)
-		}
-		// allow partial connectivity; handle in production
-		if err != nil {
-			fmt.Printf("failed to connect to peer %d (%s): %v\n", id, peerStr, err)
-		} else {
-			r.clients[id] = proto.NewRaftServiceClient(conn)
-		}
-
-	}
-}
-
 func (r *RaftNode) setPeers(addrs map[uint64]net.Addr) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -218,6 +217,7 @@ func (r *RaftNode) StartServer() error {
 	grpcServer := grpc.NewServer()
 	proto.RegisterRaftServiceServer(grpcServer, r)
 
+	log.Printf("server no.%v listening at: %v", r.id, r.addr)
 	if err := grpcServer.Serve(listener); err != nil {
 		return fmt.Errorf("failed to server grpc: %v", err)
 	}

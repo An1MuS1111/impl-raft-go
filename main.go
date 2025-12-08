@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"impl-raft-go/server"
+	"log"
 	"net"
 	"os"
 	"strconv"
@@ -27,6 +28,9 @@ func init() {
 }
 
 func main() {
+
+	log.SetFlags(log.Ltime)
+	log.SetPrefix("raft: ")
 
 	file, err := os.OpenFile("config.dat", os.O_CREATE|os.O_RDWR, 0644)
 	handleError(err)
