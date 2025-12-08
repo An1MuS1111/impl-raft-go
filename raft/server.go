@@ -1,4 +1,4 @@
-package raft
+package server
 
 import (
 	"encoding/gob"
@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"sync"
+	"time"
 )
 
 type ServerState uint64
@@ -49,7 +50,9 @@ type RaftNode struct {
 }
 
 func NewRaftNode(file *os.File, id uint64, addr net.Addr) (*RaftNode, error) {
-
+	// A node can be of three states (Leader, Candidate, Follower)
+	// When a node first starts running, or when it crashes and recovers,
+	// it starts up in the follower state and awaits messages from other nodes.
 	raftNode := &RaftNode{
 		id:          id,
 		addr:        addr,
@@ -111,12 +114,12 @@ func NewRaftNode(file *os.File, id uint64, addr net.Addr) (*RaftNode, error) {
 	return raftNode, nil
 }
 
-func (r *RaftNode) setPeers(peers map[uint64]net.Addr) {
+func (r *RaftNode) setPeers(addrs map[uint64]net.Addr) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	// remove self from peers
-	delete(peers, r.id)
-	r.peers = peers
+	delete(addrs, r.id)
+	r.peers = addrs
 
 	fmt.Println(r.id, r.addr, r.peers)
 }
@@ -124,7 +127,15 @@ func (r *RaftNode) setPeers(peers map[uint64]net.Addr) {
 func (r *RaftNode) StartServer(addrs map[uint64]net.Addr) error {
 	r.setPeers(addrs)
 
+	// If it receives no messages from a leader or candidate for some period of time,
+	// the follower suspects that the leader is unavailable, and it may attempt to become leader itself.
+
 	return nil
+}
+
+func (r *RaftNode) startElection() {
+	ticker := time.NewTicker(time.Millisecond * 300)
+	defer ticker.Stop()
 }
 
 func (r *RaftNode) BecomeLeader() {

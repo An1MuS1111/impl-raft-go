@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"impl-raft-go/raft"
+	server "impl-raft-go/raft"
 	"net"
 	"os"
 	"strconv"
@@ -21,11 +21,9 @@ var (
 	addrs = flag.String("addrs", "", "1=127.0.0.1:8081,2=127.0.0.1:8082)")
 )
 
-
-
 func main() {
 
-	file, err := os.OpenFile("config.log", os.O_CREATE|os.O_RDWR, 0644)
+	file, err := os.OpenFile("config.dat", os.O_CREATE|os.O_RDWR, 0644)
 	handleError(err)
 	defer file.Close()
 
@@ -55,7 +53,7 @@ func main() {
 		handleError(fmt.Errorf("node's own id %d not found in addrs list", *id))
 	}
 
-	raftNode, err := raft.NewRaftNode(file, *id, addr)
+	raftNode, err := server.NewRaftNode(file, *id, addr)
 	handleError(err)
 	// if err := raftNode.StartServer(addrMap); err != nil {
 	// 	handleError(err)

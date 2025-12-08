@@ -1,6 +1,7 @@
 .PHONY: build run clean test
 
 # Configuration Variables
+PROTO_TARGET=raft
 BINARY_NAME=impl-raft-go
 MAIN_PATH=. 
 OUTPUT_DIR=./bin
@@ -8,8 +9,15 @@ BINARY_PATH=$(OUTPUT_DIR)/$(BINARY_NAME)
 
 # --- Targets ---
 
+# Install required dependencies
+.PHONY: install-deps
+install-deps:
+	go get -u "google.golang.org/protobuf/reflect/protoreflect"
+	go get -u "google.golang.org/protobuf/runtime/protoimpl"
+	go get -u "google.golang.org/grpc"
+
 # Build the application binary
-build:
+build: install-deps
 	@mkdir -p $(OUTPUT_DIR)
 	go build -o $(BINARY_PATH) $(MAIN_PATH)
 
@@ -26,12 +34,11 @@ test:
 clean:
 	rm -rf $(OUTPUT_DIR)
 
-
 .PHONY: proto
 proto:
 	protoc --go_out=. --go_opt=paths=source_relative \
     --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-    proto/$(target).proto
+    proto/$(PROTO_TARGET).proto
 
 .PHONY: spawn
 spawn: build
