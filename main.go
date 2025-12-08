@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	server "impl-raft-go/raft"
+	"impl-raft-go/server"
 	"net"
 	"os"
 	"strconv"
