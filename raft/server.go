@@ -3,11 +3,11 @@ package server
 import (
 	"encoding/gob"
 	"fmt"
+	"impl-raft-go/proto"
 	"log"
 	"net"
 	"os"
 	"sync"
-	"time"
 )
 
 type ServerState uint64
@@ -18,21 +18,20 @@ const (
 	Follower
 )
 
-type Message struct {
-}
-
 type Log struct {
-	Term uint64
-	Msg  Message
+	Index   uint64 // first index has to be 1
+	Term    uint64
+	Command string
 }
 
 type RaftNode struct {
+	proto.UnimplementedRaftServiceServer
 	mu sync.Mutex
 
 	//! persistence state
-	currentTerm  uint64
-	votedFor     uint64
-	log          []Log
+	currentTerm  uint64 // latest term server has seen (initialized to 0 on first boot, increases monotonically)
+	votedFor     uint64 // candidateId that received vote in current term (or null if none)
+	log          []Log  // log entries; each entry contains command for state machine, and term when entry was received by leader (first index is 1)
 	commitLength uint64
 
 	//! read-only state
@@ -49,7 +48,27 @@ type RaftNode struct {
 
 }
 
-func NewRaftNode(file *os.File, id uint64, addr net.Addr) (*RaftNode, error) {
+func (r *RaftNode) restoreState(file *os.File) error {
+	decoder := gob.NewDecoder(file)
+
+	if err := decoder.Decode(&r.currentTerm); err != nil {
+		return fmt.Errorf("failed to decode currentTerm: %v", err)
+	}
+	if err := decoder.Decode(&r.votedFor); err != nil {
+		return fmt.Errorf("failed to decode votedFor: %v", err)
+	}
+	if err := decoder.Decode(&r.log); err != nil {
+		return fmt.Errorf("failed to decode log: %v", err)
+	}
+	if err := decoder.Decode(&r.commitLength); err != nil {
+		return fmt.Errorf("failed to decode commitLength: %v", err)
+
+	}
+
+	return nil
+}
+
+func NewRaftNode(file *os.File, id uint64, addr net.Addr, addrs map[uint64]net.Addr) (*RaftNode, error) {
 	// A node can be of three states (Leader, Candidate, Follower)
 	// When a node first starts running, or when it crashes and recovers,
 	// it starts up in the follower state and awaits messages from other nodes.
@@ -59,6 +78,8 @@ func NewRaftNode(file *os.File, id uint64, addr net.Addr) (*RaftNode, error) {
 		currentRole: Follower,
 		peers:       make(map[uint64]net.Addr),
 	}
+
+	raftNode.setPeers(addrs)
 
 	// extract currentTerm, votedFor, log, and commitLength
 	// from the disk for initialization
@@ -90,26 +111,9 @@ func NewRaftNode(file *os.File, id uint64, addr net.Addr) (*RaftNode, error) {
 	// sync the node and retrieve the persisted states
 	log.Printf("server restarted. config size: %v", configSize)
 	log.Printf("retrieving persisted state")
-
-	decoder := gob.NewDecoder(file)
-
-	if err := decoder.Decode(&raftNode.currentTerm); err != nil {
-		return nil, fmt.Errorf("failed to decode currentTerm: %v", err)
+	if err := raftNode.restoreState(file); err != nil {
+		return nil, fmt.Errorf("failed to restore state from persistence: %v", err)
 	}
-	if err := decoder.Decode(&raftNode.votedFor); err != nil {
-		return nil, fmt.Errorf("failed to decode votedFor: %v", err)
-	}
-	if err := decoder.Decode(&raftNode.log); err != nil {
-		return nil, fmt.Errorf("failed to decode log: %v", err)
-	}
-	if err := decoder.Decode(&raftNode.commitLength); err != nil {
-		return nil, fmt.Errorf("failed to decode commitLength: %v", err)
-
-	}
-	// log.Printf("currentTerm: %v", raftNode.currentTerm)
-	// log.Printf("votedFor: %v", raftNode.votedFor)
-	// log.Printf("log: %v", raftNode.log)
-	// log.Printf("commitLength: %v", raftNode.commitLength)
 
 	return raftNode, nil
 }
@@ -124,8 +128,7 @@ func (r *RaftNode) setPeers(addrs map[uint64]net.Addr) {
 	fmt.Println(r.id, r.addr, r.peers)
 }
 
-func (r *RaftNode) StartServer(addrs map[uint64]net.Addr) error {
-	r.setPeers(addrs)
+func (r *RaftNode) StartServer() error {
 
 	// If it receives no messages from a leader or candidate for some period of time,
 	// the follower suspects that the leader is unavailable, and it may attempt to become leader itself.
@@ -133,22 +136,22 @@ func (r *RaftNode) StartServer(addrs map[uint64]net.Addr) error {
 	return nil
 }
 
-func (r *RaftNode) startElection() {
-	ticker := time.NewTicker(time.Millisecond * 300)
-	defer ticker.Stop()
-}
+// func (r *RaftNode) startElection() {
+// 	ticker := time.NewTicker(time.Millisecond * 300)
+// 	defer ticker.Stop()
+// }
 
-func (r *RaftNode) BecomeLeader() {
+// func (r *RaftNode) BecomeLeader() {
 
-}
+// }
 
-func (r *RaftNode) BecomeFollower() {
+// func (r *RaftNode) BecomeFollower() {
 
-}
+// }
 
-func (r *RaftNode) BecomeCandidate() {
+// func (r *RaftNode) BecomeCandidate() {
 
-}
+// }
 
 // A node can be of three states (Leader, Candidate, Follower)
 // When a node first starts running, or when it crashes and recovers,

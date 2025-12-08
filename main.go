@@ -53,13 +53,13 @@ func main() {
 		handleError(fmt.Errorf("node's own id %d not found in addrs list", *id))
 	}
 
-	raftNode, err := server.NewRaftNode(file, *id, addr)
+	raftNode, err := server.NewRaftNode(file, *id, addr, addrMap)
 	handleError(err)
 	// if err := raftNode.StartServer(addrMap); err != nil {
 	// 	handleError(err)
 	// }
 
-	err = raftNode.StartServer(addrMap)
+	err = raftNode.StartServer()
 	handleError(err)
 
 }

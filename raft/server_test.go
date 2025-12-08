@@ -24,7 +24,7 @@ func TestNewRaftNode_EmptyFile(t *testing.T) {
 	// Create node
 	id := uint64(1)
 	addr := &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 8080}
-	node, err := NewRaftNode(file, id, addr)
+	node, err := NewRaftNode(file, id, addr, make(map[uint64]net.Addr))
 
 	// Assertions
 	if err != nil {
@@ -70,9 +70,9 @@ func TestNewRaftNode_WithPersistedState(t *testing.T) {
 	expectedTerm := uint64(5)
 	expectedVotedFor := uint64(3)
 	expectedLog := []Log{
-		{Term: 1, Msg: Message{}},
-		{Term: 2, Msg: Message{}},
-		{Term: 3, Msg: Message{}},
+		{Term: 1, Command: "cmd1"},
+		{Term: 2, Command: "cmd2"},
+		{Term: 3, Command: "cmd3"},
 	}
 	expectedCommitLength := uint64(2)
 
@@ -101,7 +101,7 @@ func TestNewRaftNode_WithPersistedState(t *testing.T) {
 	// Create node
 	id := uint64(2)
 	addr := &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 8081}
-	node, err := NewRaftNode(file, id, addr)
+	node, err := NewRaftNode(file, id, addr, make(map[uint64]net.Addr))
 
 	// Assertions
 	if err != nil {
@@ -148,7 +148,7 @@ func TestNewRaftNode_CorruptedFile_MissingTerm(t *testing.T) {
 
 	id := uint64(1)
 	addr := &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 8080}
-	_, err = NewRaftNode(file, id, addr)
+	_, err = NewRaftNode(file, id, addr, make(map[uint64]net.Addr))
 
 	if err == nil {
 		t.Fatal("expected error for corrupted file, got nil")
@@ -179,7 +179,7 @@ func TestNewRaftNode_PartialData(t *testing.T) {
 
 	id := uint64(1)
 	addr := &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 8080}
-	_, err = NewRaftNode(file, id, addr)
+	_, err = NewRaftNode(file, id, addr, make(map[uint64]net.Addr))
 
 	if err == nil {
 		t.Fatal("expected error for incomplete data, got nil")
@@ -198,7 +198,7 @@ func TestNewRaftNode_NilFile(t *testing.T) {
 		}
 	}()
 
-	NewRaftNode(nil, id, addr)
+	NewRaftNode(nil, id, addr, make(map[uint64]net.Addr))
 }
 
 // TestNewRaftNode_ZeroID tests initialization with zero ID
@@ -213,7 +213,7 @@ func TestNewRaftNode_ZeroID(t *testing.T) {
 
 	id := uint64(0)
 	addr := &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 8080}
-	node, err := NewRaftNode(file, id, addr)
+	node, err := NewRaftNode(file, id, addr, make(map[uint64]net.Addr))
 
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -235,7 +235,7 @@ func TestNewRaftNode_NilAddr(t *testing.T) {
 	defer file.Close()
 
 	id := uint64(1)
-	node, err := NewRaftNode(file, id, nil)
+	node, err := NewRaftNode(file, id, nil, make(map[uint64]net.Addr))
 
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -257,7 +257,7 @@ func TestNewRaftNode_LargeLog(t *testing.T) {
 	// Create large log
 	largeLog := make([]Log, 10000)
 	for i := range largeLog {
-		largeLog[i] = Log{Term: uint64(i / 100), Msg: Message{}}
+		largeLog[i] = Log{Term: uint64(i / 100), Command: fmt.Sprintf("cmd%d", i)}
 	}
 
 	encoder := gob.NewEncoder(file)
@@ -276,7 +276,7 @@ func TestNewRaftNode_LargeLog(t *testing.T) {
 
 	id := uint64(1)
 	addr := &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 8080}
-	node, err := NewRaftNode(file, id, addr)
+	node, err := NewRaftNode(file, id, addr, make(map[uint64]net.Addr))
 
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -309,7 +309,7 @@ func TestNewRaftNode_ConcurrentCreation(t *testing.T) {
 
 			id := uint64(idx + 1)
 			addr := &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 8080 + idx}
-			nodes[idx], errors[idx] = NewRaftNode(file, id, addr)
+			nodes[idx], errors[idx] = NewRaftNode(file, id, addr, make(map[uint64]net.Addr))
 		}(i)
 	}
 	wg.Wait()
