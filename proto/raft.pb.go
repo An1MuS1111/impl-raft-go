@@ -23,10 +23,10 @@ const (
 
 type RequestVoteArgs struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Term          int64                  `protobuf:"varint,1,opt,name=term,proto3" json:"term,omitempty"`
-	CandidateId   int64                  `protobuf:"varint,2,opt,name=candidateId,proto3" json:"candidateId,omitempty"`
-	LastLogIndex  int64                  `protobuf:"varint,3,opt,name=lastLogIndex,proto3" json:"lastLogIndex,omitempty"`
-	LastLogTerm   int64                  `protobuf:"varint,4,opt,name=lastLogTerm,proto3" json:"lastLogTerm,omitempty"`
+	Term          uint64                 `protobuf:"varint,1,opt,name=term,proto3" json:"term,omitempty"`
+	CandidateId   uint64                 `protobuf:"varint,2,opt,name=candidateId,proto3" json:"candidateId,omitempty"`
+	LastLogIndex  uint64                 `protobuf:"varint,3,opt,name=lastLogIndex,proto3" json:"lastLogIndex,omitempty"`
+	LastLogTerm   uint64                 `protobuf:"varint,4,opt,name=lastLogTerm,proto3" json:"lastLogTerm,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -61,28 +61,28 @@ func (*RequestVoteArgs) Descriptor() ([]byte, []int) {
 	return file_proto_raft_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *RequestVoteArgs) GetTerm() int64 {
+func (x *RequestVoteArgs) GetTerm() uint64 {
 	if x != nil {
 		return x.Term
 	}
 	return 0
 }
 
-func (x *RequestVoteArgs) GetCandidateId() int64 {
+func (x *RequestVoteArgs) GetCandidateId() uint64 {
 	if x != nil {
 		return x.CandidateId
 	}
 	return 0
 }
 
-func (x *RequestVoteArgs) GetLastLogIndex() int64 {
+func (x *RequestVoteArgs) GetLastLogIndex() uint64 {
 	if x != nil {
 		return x.LastLogIndex
 	}
 	return 0
 }
 
-func (x *RequestVoteArgs) GetLastLogTerm() int64 {
+func (x *RequestVoteArgs) GetLastLogTerm() uint64 {
 	if x != nil {
 		return x.LastLogTerm
 	}
@@ -91,7 +91,7 @@ func (x *RequestVoteArgs) GetLastLogTerm() int64 {
 
 type RequestVoteReply struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Term          int64                  `protobuf:"varint,1,opt,name=term,proto3" json:"term,omitempty"`
+	Term          uint64                 `protobuf:"varint,1,opt,name=term,proto3" json:"term,omitempty"`
 	VoteGranted   bool                   `protobuf:"varint,2,opt,name=voteGranted,proto3" json:"voteGranted,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -127,7 +127,7 @@ func (*RequestVoteReply) Descriptor() ([]byte, []int) {
 	return file_proto_raft_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *RequestVoteReply) GetTerm() int64 {
+func (x *RequestVoteReply) GetTerm() uint64 {
 	if x != nil {
 		return x.Term
 	}
@@ -143,12 +143,12 @@ func (x *RequestVoteReply) GetVoteGranted() bool {
 
 type AppendEntriesArgs struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Term          int64                  `protobuf:"varint,1,opt,name=term,proto3" json:"term,omitempty"`
-	LeaderId      int64                  `protobuf:"varint,2,opt,name=leaderId,proto3" json:"leaderId,omitempty"`
-	PrevLogIndex  int64                  `protobuf:"varint,3,opt,name=prevLogIndex,proto3" json:"prevLogIndex,omitempty"`
-	PrevLogTerm   int64                  `protobuf:"varint,4,opt,name=prevLogTerm,proto3" json:"prevLogTerm,omitempty"`
+	Term          uint64                 `protobuf:"varint,1,opt,name=term,proto3" json:"term,omitempty"`
+	LeaderId      uint64                 `protobuf:"varint,2,opt,name=leaderId,proto3" json:"leaderId,omitempty"`
+	PrevLogIndex  uint64                 `protobuf:"varint,3,opt,name=prevLogIndex,proto3" json:"prevLogIndex,omitempty"`
+	PrevLogTerm   uint64                 `protobuf:"varint,4,opt,name=prevLogTerm,proto3" json:"prevLogTerm,omitempty"`
 	Entries       []*LogEntry            `protobuf:"bytes,5,rep,name=entries,proto3" json:"entries,omitempty"`
-	LeaderCommit  int64                  `protobuf:"varint,6,opt,name=leaderCommit,proto3" json:"leaderCommit,omitempty"`
+	LeaderCommit  uint64                 `protobuf:"varint,6,opt,name=leaderCommit,proto3" json:"leaderCommit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -183,28 +183,28 @@ func (*AppendEntriesArgs) Descriptor() ([]byte, []int) {
 	return file_proto_raft_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *AppendEntriesArgs) GetTerm() int64 {
+func (x *AppendEntriesArgs) GetTerm() uint64 {
 	if x != nil {
 		return x.Term
 	}
 	return 0
 }
 
-func (x *AppendEntriesArgs) GetLeaderId() int64 {
+func (x *AppendEntriesArgs) GetLeaderId() uint64 {
 	if x != nil {
 		return x.LeaderId
 	}
 	return 0
 }
 
-func (x *AppendEntriesArgs) GetPrevLogIndex() int64 {
+func (x *AppendEntriesArgs) GetPrevLogIndex() uint64 {
 	if x != nil {
 		return x.PrevLogIndex
 	}
 	return 0
 }
 
-func (x *AppendEntriesArgs) GetPrevLogTerm() int64 {
+func (x *AppendEntriesArgs) GetPrevLogTerm() uint64 {
 	if x != nil {
 		return x.PrevLogTerm
 	}
@@ -218,7 +218,7 @@ func (x *AppendEntriesArgs) GetEntries() []*LogEntry {
 	return nil
 }
 
-func (x *AppendEntriesArgs) GetLeaderCommit() int64 {
+func (x *AppendEntriesArgs) GetLeaderCommit() uint64 {
 	if x != nil {
 		return x.LeaderCommit
 	}
@@ -227,7 +227,7 @@ func (x *AppendEntriesArgs) GetLeaderCommit() int64 {
 
 type AppendEntriesReply struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Term          int64                  `protobuf:"varint,1,opt,name=term,proto3" json:"term,omitempty"`
+	Term          uint64                 `protobuf:"varint,1,opt,name=term,proto3" json:"term,omitempty"`
 	Success       bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -263,7 +263,7 @@ func (*AppendEntriesReply) Descriptor() ([]byte, []int) {
 	return file_proto_raft_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *AppendEntriesReply) GetTerm() int64 {
+func (x *AppendEntriesReply) GetTerm() uint64 {
 	if x != nil {
 		return x.Term
 	}
@@ -279,10 +279,10 @@ func (x *AppendEntriesReply) GetSuccess() bool {
 
 type InstallSnapshotArgs struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	Term              int64                  `protobuf:"varint,1,opt,name=term,proto3" json:"term,omitempty"`
-	LeaderId          int64                  `protobuf:"varint,2,opt,name=leaderId,proto3" json:"leaderId,omitempty"`
-	LastIncludedIndex int64                  `protobuf:"varint,3,opt,name=lastIncludedIndex,proto3" json:"lastIncludedIndex,omitempty"`
-	LastIncludedTerm  int64                  `protobuf:"varint,4,opt,name=lastIncludedTerm,proto3" json:"lastIncludedTerm,omitempty"`
+	Term              uint64                 `protobuf:"varint,1,opt,name=term,proto3" json:"term,omitempty"`
+	LeaderId          uint64                 `protobuf:"varint,2,opt,name=leaderId,proto3" json:"leaderId,omitempty"`
+	LastIncludedIndex uint64                 `protobuf:"varint,3,opt,name=lastIncludedIndex,proto3" json:"lastIncludedIndex,omitempty"`
+	LastIncludedTerm  uint64                 `protobuf:"varint,4,opt,name=lastIncludedTerm,proto3" json:"lastIncludedTerm,omitempty"`
 	Data              []byte                 `protobuf:"bytes,5,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
@@ -318,28 +318,28 @@ func (*InstallSnapshotArgs) Descriptor() ([]byte, []int) {
 	return file_proto_raft_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *InstallSnapshotArgs) GetTerm() int64 {
+func (x *InstallSnapshotArgs) GetTerm() uint64 {
 	if x != nil {
 		return x.Term
 	}
 	return 0
 }
 
-func (x *InstallSnapshotArgs) GetLeaderId() int64 {
+func (x *InstallSnapshotArgs) GetLeaderId() uint64 {
 	if x != nil {
 		return x.LeaderId
 	}
 	return 0
 }
 
-func (x *InstallSnapshotArgs) GetLastIncludedIndex() int64 {
+func (x *InstallSnapshotArgs) GetLastIncludedIndex() uint64 {
 	if x != nil {
 		return x.LastIncludedIndex
 	}
 	return 0
 }
 
-func (x *InstallSnapshotArgs) GetLastIncludedTerm() int64 {
+func (x *InstallSnapshotArgs) GetLastIncludedTerm() uint64 {
 	if x != nil {
 		return x.LastIncludedTerm
 	}
@@ -355,7 +355,7 @@ func (x *InstallSnapshotArgs) GetData() []byte {
 
 type InstallSnapshotReply struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Term          int64                  `protobuf:"varint,1,opt,name=term,proto3" json:"term,omitempty"`
+	Term          uint64                 `protobuf:"varint,1,opt,name=term,proto3" json:"term,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -390,7 +390,7 @@ func (*InstallSnapshotReply) Descriptor() ([]byte, []int) {
 	return file_proto_raft_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *InstallSnapshotReply) GetTerm() int64 {
+func (x *InstallSnapshotReply) GetTerm() uint64 {
 	if x != nil {
 		return x.Term
 	}
@@ -399,9 +399,9 @@ func (x *InstallSnapshotReply) GetTerm() int64 {
 
 type LogEntry struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Term          int64                  `protobuf:"varint,1,opt,name=term,proto3" json:"term,omitempty"`
-	Index         int64                  `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
-	Command       []byte                 `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
+	Term          uint64                 `protobuf:"varint,1,opt,name=term,proto3" json:"term,omitempty"`
+	Index         uint64                 `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
+	Command       string                 `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -436,25 +436,25 @@ func (*LogEntry) Descriptor() ([]byte, []int) {
 	return file_proto_raft_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *LogEntry) GetTerm() int64 {
+func (x *LogEntry) GetTerm() uint64 {
 	if x != nil {
 		return x.Term
 	}
 	return 0
 }
 
-func (x *LogEntry) GetIndex() int64 {
+func (x *LogEntry) GetIndex() uint64 {
 	if x != nil {
 		return x.Index
 	}
 	return 0
 }
 
-func (x *LogEntry) GetCommand() []byte {
+func (x *LogEntry) GetCommand() string {
 	if x != nil {
 		return x.Command
 	}
-	return nil
+	return ""
 }
 
 // for testing purpose
@@ -552,35 +552,35 @@ const file_proto_raft_proto_rawDesc = "" +
 	"\n" +
 	"\x10proto/raft.proto\x12\x04raft\"\x8d\x01\n" +
 	"\x0fRequestVoteArgs\x12\x12\n" +
-	"\x04term\x18\x01 \x01(\x03R\x04term\x12 \n" +
-	"\vcandidateId\x18\x02 \x01(\x03R\vcandidateId\x12\"\n" +
-	"\flastLogIndex\x18\x03 \x01(\x03R\flastLogIndex\x12 \n" +
-	"\vlastLogTerm\x18\x04 \x01(\x03R\vlastLogTerm\"H\n" +
+	"\x04term\x18\x01 \x01(\x04R\x04term\x12 \n" +
+	"\vcandidateId\x18\x02 \x01(\x04R\vcandidateId\x12\"\n" +
+	"\flastLogIndex\x18\x03 \x01(\x04R\flastLogIndex\x12 \n" +
+	"\vlastLogTerm\x18\x04 \x01(\x04R\vlastLogTerm\"H\n" +
 	"\x10RequestVoteReply\x12\x12\n" +
-	"\x04term\x18\x01 \x01(\x03R\x04term\x12 \n" +
+	"\x04term\x18\x01 \x01(\x04R\x04term\x12 \n" +
 	"\vvoteGranted\x18\x02 \x01(\bR\vvoteGranted\"\xd7\x01\n" +
 	"\x11AppendEntriesArgs\x12\x12\n" +
-	"\x04term\x18\x01 \x01(\x03R\x04term\x12\x1a\n" +
-	"\bleaderId\x18\x02 \x01(\x03R\bleaderId\x12\"\n" +
-	"\fprevLogIndex\x18\x03 \x01(\x03R\fprevLogIndex\x12 \n" +
-	"\vprevLogTerm\x18\x04 \x01(\x03R\vprevLogTerm\x12(\n" +
+	"\x04term\x18\x01 \x01(\x04R\x04term\x12\x1a\n" +
+	"\bleaderId\x18\x02 \x01(\x04R\bleaderId\x12\"\n" +
+	"\fprevLogIndex\x18\x03 \x01(\x04R\fprevLogIndex\x12 \n" +
+	"\vprevLogTerm\x18\x04 \x01(\x04R\vprevLogTerm\x12(\n" +
 	"\aentries\x18\x05 \x03(\v2\x0e.raft.LogEntryR\aentries\x12\"\n" +
-	"\fleaderCommit\x18\x06 \x01(\x03R\fleaderCommit\"B\n" +
+	"\fleaderCommit\x18\x06 \x01(\x04R\fleaderCommit\"B\n" +
 	"\x12AppendEntriesReply\x12\x12\n" +
-	"\x04term\x18\x01 \x01(\x03R\x04term\x12\x18\n" +
+	"\x04term\x18\x01 \x01(\x04R\x04term\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\"\xb3\x01\n" +
 	"\x13InstallSnapshotArgs\x12\x12\n" +
-	"\x04term\x18\x01 \x01(\x03R\x04term\x12\x1a\n" +
-	"\bleaderId\x18\x02 \x01(\x03R\bleaderId\x12,\n" +
-	"\x11lastIncludedIndex\x18\x03 \x01(\x03R\x11lastIncludedIndex\x12*\n" +
-	"\x10lastIncludedTerm\x18\x04 \x01(\x03R\x10lastIncludedTerm\x12\x12\n" +
+	"\x04term\x18\x01 \x01(\x04R\x04term\x12\x1a\n" +
+	"\bleaderId\x18\x02 \x01(\x04R\bleaderId\x12,\n" +
+	"\x11lastIncludedIndex\x18\x03 \x01(\x04R\x11lastIncludedIndex\x12*\n" +
+	"\x10lastIncludedTerm\x18\x04 \x01(\x04R\x10lastIncludedTerm\x12\x12\n" +
 	"\x04data\x18\x05 \x01(\fR\x04data\"*\n" +
 	"\x14InstallSnapshotReply\x12\x12\n" +
-	"\x04term\x18\x01 \x01(\x03R\x04term\"N\n" +
+	"\x04term\x18\x01 \x01(\x04R\x04term\"N\n" +
 	"\bLogEntry\x12\x12\n" +
-	"\x04term\x18\x01 \x01(\x03R\x04term\x12\x14\n" +
-	"\x05index\x18\x02 \x01(\x03R\x05index\x12\x18\n" +
-	"\acommand\x18\x03 \x01(\fR\acommand\"%\n" +
+	"\x04term\x18\x01 \x01(\x04R\x04term\x12\x14\n" +
+	"\x05index\x18\x02 \x01(\x04R\x05index\x12\x18\n" +
+	"\acommand\x18\x03 \x01(\tR\acommand\"%\n" +
 	"\x0fHealthCheckArgs\x12\x12\n" +
 	"\x04ping\x18\x01 \x01(\tR\x04ping\"&\n" +
 	"\x10HealthCheckReply\x12\x12\n" +

@@ -41,6 +41,6 @@ proto:
 .PHONY: spawn
 spawn: build
 # NOTE: The line below must start with a literal TAB character.
-	chmod +x spawn.sh
+	chmod +x run_cluster.sh
 # NOTE: The line below must start with a literal TAB character.
-	./spawn.sh
+	./run_cluster.sh
