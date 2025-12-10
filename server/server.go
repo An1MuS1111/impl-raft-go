@@ -43,16 +43,26 @@ func (r *RaftNode) startElection() {
 	r.currentTerm++
 	r.votedFor = r.id
 	log.Printf("[%v] attempting an election at term %v", r.id, r.currentTerm)
+	currentTerm := r.currentTerm
 	r.mu.Unlock()
 
 	for _, client := range r.clients {
-		go func(client proto.RaftServiceClient) {
+		go func(client proto.RaftServiceClient, currentTerm uint64) {
 			voteGranted := r.callRequestVote(client)
 			if !voteGranted {
 				return
 			}
 			// ....tally the votes
-		}(client)
+			r.mu.Lock()
+			// If a candidate receives votes from a majority of servers for the same term, it becomes leader.
+			// If a candidate receives vote from a peer, it means that the peer has acknowledged the candidate as a legitimate leader for that term.
+			// So, the candidate should count the vote.
+			// If the candidate receives votes from a majority of servers, it transitions to leader.
+			// If another server claims to be leader (AppendEntries RPC) or
+			// if a candidate with a higher term is discovered, the candidate reverts to follower state.
+			r.mu.Unlock()
+
+		}(client, currentTerm)
 	}
 }
 
