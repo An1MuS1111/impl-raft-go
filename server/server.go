@@ -38,9 +38,30 @@ func (r *RaftNode) StartServer() error {
 }
 
 func (r *RaftNode) startElection() {
+	r.mu.Lock()
+	r.currentRole = Candidate
+	r.currentTerm++
+	r.votedFor = r.id
+	log.Printf("[%v] attempting an election at term %v", r.id, r.currentTerm)
+	r.mu.Unlock()
+
+	for _, client := range r.clients {
+		go func(client proto.RaftServiceClient) {
+			voteGranted := r.callRequestVote(client)
+			if !voteGranted {
+				return
+			}
+			// ....tally the votes
+		}(client)
+	}
+}
+
+// [incomplete]
+func (r *RaftNode) callRequestVote(client proto.RaftServiceClient) bool {
 
 }
 
+// [incomplete]
 // runElectionTimer handles election timeouts and starts elections.
 func (r *RaftNode) runElectionTimer() {
 	timeout := time.Duration(150+rand.Intn(150)) * time.Millisecond // Random timeout (150-300ms)
@@ -77,6 +98,7 @@ func convertToProtoEntries(entries []Log) []*proto.LogEntry {
 	return protoEntries
 }
 
+// [incomplete]
 func (r *RaftNode) StartHeartBeat() {
 	ticker := time.NewTicker(time.Millisecond * 50) // 50 ms interval per heartbeat
 	defer ticker.Stop()

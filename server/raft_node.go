@@ -84,6 +84,37 @@ type RaftNode struct {
 	electionReset chan struct{}
 }
 
+func (r *RaftNode) setPeers(addrs map[uint64]net.Addr) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	// remove self from peers
+	delete(addrs, r.id)
+	r.peers = addrs
+
+	fmt.Println(r.id, r.addr, r.peers)
+}
+
+// Helper to establish GRPC connections to all peers
+func (r *RaftNode) dialPeers() {
+	peers := r.peers
+
+	for id, peer := range peers {
+
+		peerStr := peer.String()
+		conn, err := grpc.NewClient(peerStr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if conn != nil {
+			fmt.Printf("connected to: %v", peerStr)
+		}
+		// allow partial connectivity; handle in production
+		if err != nil {
+			fmt.Printf("failed to connect to peer %d (%s): %v\n", id, peerStr, err)
+		} else {
+			r.clients[id] = proto.NewRaftServiceClient(conn)
+		}
+
+	}
+}
+
 func (r *RaftNode) restoreState(file *os.File) error {
 	decoder := gob.NewDecoder(file)
 
@@ -127,37 +158,6 @@ func (r *RaftNode) storeState(file *os.File) error {
 	return nil
 }
 
-// Helper to establish GRPC connections to all peers
-func (r *RaftNode) dialPeers() {
-	peers := r.peers
-
-	for id, peer := range peers {
-
-		peerStr := peer.String()
-		conn, err := grpc.NewClient(peerStr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if conn != nil {
-			fmt.Printf("connected to: %v", peerStr)
-		}
-		// allow partial connectivity; handle in production
-		if err != nil {
-			fmt.Printf("failed to connect to peer %d (%s): %v\n", id, peerStr, err)
-		} else {
-			r.clients[id] = proto.NewRaftServiceClient(conn)
-		}
-
-	}
-}
-
-func (r *RaftNode) setPeers(addrs map[uint64]net.Addr) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	// remove self from peers
-	delete(addrs, r.id)
-	r.peers = addrs
-
-	fmt.Println(r.id, r.addr, r.peers)
-}
-
 func NewRaftNode(file *os.File, id uint64, addr net.Addr, addrs map[uint64]net.Addr) (*RaftNode, error) {
 	// A node can be of three states (Leader, Candidate, Follower)
 	// When a node first starts running, or when it crashes and recovers,
@@ -184,6 +184,9 @@ func NewRaftNode(file *os.File, id uint64, addr net.Addr, addrs map[uint64]net.A
 	}
 
 	raftNode.setPeers(addrs)
+	// [incomplete]
+	// in dynamic state this should be handled as hotswappable
+	raftNode.dialPeers()
 
 	// extract currentTerm, votedFor, log, and commitIndex
 	// from the disk for initialization
@@ -208,8 +211,6 @@ func NewRaftNode(file *os.File, id uint64, addr net.Addr, addrs map[uint64]net.A
 			return nil, fmt.Errorf("failed to restore state from persistence: %v", err)
 		}
 	}
-
-	// raftNode.dialPeers()
 
 	// //***need to evaluate this thing, and where to put it***
 	// if raftNode.currentRole == Leader {
