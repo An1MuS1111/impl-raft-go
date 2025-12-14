@@ -46,7 +46,7 @@ func (r *RaftNode) startElection() {
 	currentTerm := r.currentTerm
 	r.mu.Unlock()
 
-	for _, client := range r.clients {
+	for _, client := range r.servers {
 		go func(client proto.RaftServiceClient, currentTerm uint64) {
 			voteGranted := r.callRequestVote(client)
 			if !voteGranted {
@@ -117,7 +117,7 @@ func (r *RaftNode) StartHeartBeat() {
 		for {
 			<-ticker.C
 
-			for _, client := range r.clients {
+			for _, client := range r.servers {
 
 				r.mu.Lock()
 				args := &proto.AppendEntriesArgs{

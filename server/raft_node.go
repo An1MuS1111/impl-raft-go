@@ -13,10 +13,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type ServerRole uint64
+type State uint64
 
 const (
-	Leader ServerRole = iota
+	Leader State = iota
 	Candidate
 	Follower
 )
@@ -67,19 +67,19 @@ type RaftNode struct {
 	lastApplied uint64 //? not entirely sure about this! how to retrieve the commit index on recovery?
 
 	//! volatile state on leader (reintialized after election)
-	nextIndex  []uint64 // for each server, index of the next log entry to send to that server (initialized to leader last log index + 1)
-	matchIndex []uint64 // for each server, index of highest log entry known to be replicated on server (initialized to 0, increases monotonically)
+	nextIndex  map[uint64]uint64 // for each server, index of the next log entry to send to that server (initialized to leader last log index + 1)
+	matchIndex map[uint64]uint64 // for each server, index of highest log entry known to be replicated on server (initialized to 0, increases monotonically)
 
 	//--- Above are the properties of state mentioned in the raft paper
 
 	//! volatile state
-	currentRole ServerRole
+	currentRole State
 	// currentLeader unique
 	// votesReceived uint64
 	// sentLength    uint64
 	// ackedLength   uint64
 
-	clients map[uint64]proto.RaftServiceClient
+	servers map[uint64]proto.RaftServiceClient
 
 	electionReset chan struct{}
 }
@@ -109,7 +109,7 @@ func (r *RaftNode) dialPeers() {
 		if err != nil {
 			fmt.Printf("failed to connect to peer %d (%s): %v\n", id, peerStr, err)
 		} else {
-			r.clients[id] = proto.NewRaftServiceClient(conn)
+			r.servers[id] = proto.NewRaftServiceClient(conn)
 		}
 
 	}
@@ -175,11 +175,11 @@ func NewRaftNode(file *os.File, id uint64, addr net.Addr, addrs map[uint64]net.A
 		commitIndex: 0,
 		lastApplied: 0,
 		// volatile state on leader
-		nextIndex:  make([]uint64, 0),
-		matchIndex: make([]uint64, 0),
+		nextIndex:  make(map[uint64]uint64, 0),
+		matchIndex: make(map[uint64]uint64, 0),
 
 		currentRole:   Follower,
-		clients:       make(map[uint64]proto.RaftServiceClient),
+		servers:       make(map[uint64]proto.RaftServiceClient),
 		electionReset: make(chan struct{}),
 	}
 
@@ -222,7 +222,7 @@ func NewRaftNode(file *os.File, id uint64, addr net.Addr, addrs map[uint64]net.A
 	// 		for {
 	// 			<-ticker
 
-	// 			for id, client := range raftNode.clients {
+	// 			for id, client := range raftNode.servers {
 	// 				reply, err := client.HealthCheck(ctx, &proto.HealthCheckArgs{Ping: "Ping"})
 	// 				if reply == nil {
 	// 					log.Printf("no reply from: %v", raftNode.peers[id])
