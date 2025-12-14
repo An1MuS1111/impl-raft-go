@@ -15,16 +15,13 @@ type Config struct {
 }
 
 func NewConfig() (*Config, error) {
-
-	config := &Config{}
-
 	var (
 		id         uint64
 		addrString string
 	)
 
 	flag.Uint64Var(&id, "id", 0, "serverID must be a non-zero integer.")
-	flag.StringVar(&addrString, "addrs", "", "1=127.0.0.1:8081,2=127.0.0.1:8082)")
+	flag.StringVar(&addrString, "addrs", "", "1=127.0.0.1:8081,2=127.0.0.1:8082),3=127.0.0.1:8083)")
 	flag.Parse()
 
 	if id == 0 {
@@ -39,6 +36,7 @@ func NewConfig() (*Config, error) {
 			if len(parts) != 2 {
 				return nil, fmt.Errorf("invalid addr format: %s", p)
 			}
+
 			addrID, err := strconv.ParseUint(parts[0], 10, 64)
 			if err != nil {
 				return nil, err
@@ -52,14 +50,16 @@ func NewConfig() (*Config, error) {
 		}
 	}
 
-	if addr, ok := addrMap[id]; ok {
-		config.ServerAddr = addr
-		delete(addrMap, config.ServerID)
-	} else {
+	addr, ok := addrMap[id]
+	if !ok {
 		return nil, fmt.Errorf("ServerID: %d not found in addrs list", id)
 	}
-	config.ServerID = id
-	config.Peers = addrMap
 
-	return config, nil
+	delete(addrMap, id)
+
+	return &Config{
+		ServerID:   id,
+		ServerAddr: addr,
+		Peers:      addrMap,
+	}, nil
 }

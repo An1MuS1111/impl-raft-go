@@ -22,8 +22,8 @@ func main() {
 	cfg, err := config.NewConfig()
 	handleError(err)
 
-	prefixString := fmt.Sprintf("\n(%d)[%s] ", cfg.ServerID, cfg.ServerAddr)
-
+	// log formatting
+	prefixString := fmt.Sprintf("\n%d - [%s] ", cfg.ServerID, cfg.ServerAddr)
 	log.SetFlags(log.Ltime)
 	log.SetPrefix(prefixString)
 	log.Printf("Hello there")
