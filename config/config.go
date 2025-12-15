@@ -14,6 +14,7 @@ type Config struct {
 	Peers      map[uint64]net.Addr
 }
 
+// NewConfig() pareses the flags and return a pointer to the Config & error
 func NewConfig() (*Config, error) {
 	var (
 		id         uint64
