@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"impl-raft-go/config"
+	"impl-raft-go/server"
 	"log"
-	"os"
 )
 
 func handleError(err error) {
@@ -14,24 +14,19 @@ func handleError(err error) {
 }
 
 func main() {
-
-	file, err := os.OpenFile("config.dat", os.O_CREATE|os.O_RDWR, 0644)
+	cfg, err := config.NewConfig("config.dat")
 	handleError(err)
-	defer file.Close()
+	defer cfg.File.Close()
 
-	cfg, err := config.NewConfig()
+	raftNode, err := server.NewRaftNode(cfg)
 	handleError(err)
 
-	// log formatting
-	prefixString := fmt.Sprintf("\n%d - [%s] ", cfg.ServerID, cfg.ServerAddr)
+	// customized log settings displaying ServerID, ServerAddr, and currentTerm
 	log.SetFlags(log.Ltime)
+	prefixString := fmt.Sprintf("\n[%d; %s] term: %d ~ ", cfg.ServerID, cfg.ServerAddr, raftNode.GetCurrentTerm())
 	log.SetPrefix(prefixString)
-	log.Printf("Hello there")
 
-	// raftNode, err := server.NewRaftNode(file, id, addr, addrMap)
-	// handleError(err)
-
-	// err = raftNode.StartServer()
-	// handleError(err)
+	err = raftNode.StartServer()
+	handleError(err)
 
 }

@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/gob"
 	"fmt"
+	"impl-raft-go/config"
 	"impl-raft-go/proto"
 	"log"
 	"net"
@@ -54,9 +55,9 @@ type RaftNode struct {
 	mu sync.Mutex
 
 	//! read-only state
-	id    uint64
-	addr  net.Addr
-	peers map[uint64]net.Addr
+	ServerID   uint64
+	ServerAddr net.Addr
+	Peers      map[uint64]net.Addr
 
 	//! persistence state
 	currentTerm uint64 // latest term server has seen (initialized to 0 on first boot, increases monotonically)
@@ -84,21 +85,10 @@ type RaftNode struct {
 	electionReset chan struct{}
 }
 
-func (r *RaftNode) setPeers(addrs map[uint64]net.Addr) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	// remove self from peers
-	delete(addrs, r.id)
-	r.peers = addrs
-
-	fmt.Println(r.id, r.addr, r.peers)
-}
-
 // Helper to establish GRPC connections to all peers
 func (r *RaftNode) dialPeers() {
-	peers := r.peers
 
-	for id, peer := range peers {
+	for id, peer := range r.Peers {
 
 		peerStr := peer.String()
 		conn, err := grpc.NewClient(peerStr, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -158,15 +148,16 @@ func (r *RaftNode) storeState(file *os.File) error {
 	return nil
 }
 
-func NewRaftNode(file *os.File, id uint64, addr net.Addr, addrs map[uint64]net.Addr) (*RaftNode, error) {
+func NewRaftNode(cfg *config.Config) (*RaftNode, error) {
+
 	// A node can be of three states (Leader, Candidate, Follower)
 	// When a node first starts running, or when it crashes and recovers,
 	// it starts up in the follower state and awaits messages from other nodes.
 	raftNode := &RaftNode{
 		// read-only
-		id:    id,
-		addr:  addr,
-		peers: make(map[uint64]net.Addr),
+		ServerID:   cfg.ServerID,
+		ServerAddr: cfg.ServerAddr,
+		Peers:      cfg.Peers,
 		// persistence
 		currentTerm: 0,
 		votedFor:    0,
@@ -183,7 +174,7 @@ func NewRaftNode(file *os.File, id uint64, addr net.Addr, addrs map[uint64]net.A
 		electionReset: make(chan struct{}),
 	}
 
-	raftNode.setPeers(addrs)
+	// raftNode.setPeers(addrs)
 	// [incomplete]
 	// in dynamic state this should be handled as hotswappable
 	raftNode.dialPeers()
@@ -191,23 +182,25 @@ func NewRaftNode(file *os.File, id uint64, addr net.Addr, addrs map[uint64]net.A
 	// extract currentTerm, votedFor, log, and commitIndex
 	// from the disk for initialization
 
-	if _, err := file.Seek(0, 0); err != nil {
+	cfgFile := cfg.File
+
+	if _, err := cfgFile.Seek(0, 0); err != nil {
 		return nil, fmt.Errorf("failed to seek to beginning: %v", err)
 	}
 
-	stat, err := file.Stat()
+	stat, err := cfgFile.Stat()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats of file: %v", err)
 	}
 	// if the size == 0 that means the the node is newly added to the quorum
 	// other wise we think the node has crashed or
 	// for some reason it was shutdown to apply some updates
-	configSize := stat.Size()
-	if configSize != 0 {
+	cfgFileSize := stat.Size()
+	if cfgFileSize != 0 {
 		// sync the node and retrieve the persisted states
-		log.Printf("server restarted. config size: %v", configSize)
+		log.Printf("server restarted. config size: %v", cfgFileSize)
 		log.Printf("retrieving persisted state")
-		if err := raftNode.restoreState(file); err != nil {
+		if err := raftNode.restoreState(cfgFile); err != nil {
 			return nil, fmt.Errorf("failed to restore state from persistence: %v", err)
 		}
 	}
@@ -241,42 +234,6 @@ func NewRaftNode(file *os.File, id uint64, addr net.Addr, addrs map[uint64]net.A
 	return raftNode, nil
 }
 
-// ***implement heartbeat***
-// article: https://www.linkedin.com/pulse/raft-replication-happy-case-migo-lee-7mezc/?trackingId=0LrOxmbGRLaV5ZQ%2BooYMqQ%3D%3D&trk=article-ssr-frontend-pulse_little-text-block
-// Periodic heartbeat
-// The leader sends periodic heartbeat messages approximately every 300–500 milliseconds.
-// Each heartbeat message contains:
-// The current term (a logical clock value).
-// The leader’s identity to confirm leadership status.
-// Each valid term is associated with a single leader, ensuring that only one node holds leadership at any given time.
-
-// func (r *RaftNode) startElection() {
-// 	ticker := time.NewTicker(time.Millisecond * 300)
-// 	defer ticker.Stop()
-// }
-
-// func (r *RaftNode) BecomeLeader() {
-
-// }
-
-// func (r *RaftNode) BecomeFollower() {
-
-// }
-
-// func (r *RaftNode) BecomeCandidate() {
-
-// }
-
-// A node can be of three states (Leader, Candidate, Follower)
-// When a node first starts running, or when it crashes and recovers,
-// it starts up in the follower state and awaits messages from other nodes.
-// If it receives no messages from a leader or candidate for some period of time,
-// the follower suspects that the leader is unavailable, and it may attempt to become leader itself.
-// The timeout for detecting leader failure is randomised,
-// to reduce the probability of several nodes becoming candidates concurrently and competing to become leader.
-// When a node suspects the leader to have failed,
-// it transitions to the candidate state, increments the term number, and starts a leader election in that term. !term increment
-// During this election, if the node hears from another candidate or leader with a higher term,
-// it moves back into the follower state.
-// But if the election succeeds and it receives votes from a quorum of nodes, the candidate transitions to leader state.
-// If not enough votes are received within some period of time, the election times out, and the candidate restarts the election with a higher term. !important
+func (r *RaftNode) GetCurrentTerm() uint64 {
+	return r.currentTerm
+}

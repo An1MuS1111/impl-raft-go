@@ -16,17 +16,17 @@ import (
 // else convert to candidate and start election
 func (r *RaftNode) StartServer() error {
 
-	addr := r.addr.String()
+	addrStr := r.ServerAddr.String()
 
-	listener, err := net.Listen("tcp", addr)
+	listener, err := net.Listen("tcp", addrStr)
 	if err != nil {
-		return fmt.Errorf("failed to listen on %s: %v", addr, err)
+		return fmt.Errorf("failed to listen on %s: %v", addrStr, err)
 	}
 
 	grpcServer := grpc.NewServer()
 	proto.RegisterRaftServiceServer(grpcServer, r)
 
-	log.Printf("server no.%v listening at: %v", r.id, r.addr)
+	log.Printf("started listening...")
 	if err := grpcServer.Serve(listener); err != nil {
 		return fmt.Errorf("failed to server grpc: %v", err)
 	}
@@ -41,8 +41,8 @@ func (r *RaftNode) startElection() {
 	r.mu.Lock()
 	r.currentRole = Candidate
 	r.currentTerm++
-	r.votedFor = r.id
-	log.Printf("[%v] attempting an election at term %v", r.id, r.currentTerm)
+	r.votedFor = r.ServerID
+	log.Printf("attempting an election")
 	currentTerm := r.currentTerm
 	r.mu.Unlock()
 
@@ -69,6 +69,7 @@ func (r *RaftNode) startElection() {
 // [incomplete]
 func (r *RaftNode) callRequestVote(client proto.RaftServiceClient) bool {
 
+	return true
 }
 
 // [incomplete]

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -12,10 +13,11 @@ type Config struct {
 	ServerID   uint64
 	ServerAddr net.Addr
 	Peers      map[uint64]net.Addr
+	File       *os.File
 }
 
 // NewConfig() pareses the flags and return a pointer to the Config & error
-func NewConfig() (*Config, error) {
+func NewConfig(cfgFileName string) (*Config, error) {
 	var (
 		id         uint64
 		addrString string
@@ -58,9 +60,15 @@ func NewConfig() (*Config, error) {
 
 	delete(addrMap, id)
 
+	file, err := os.OpenFile(cfgFileName, os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		return nil, fmt.Errorf("failed to OPEN|CREATE %s file", cfgFileName)
+	}
+
 	return &Config{
 		ServerID:   id,
 		ServerAddr: addr,
 		Peers:      addrMap,
+		File:       file,
 	}, nil
 }
